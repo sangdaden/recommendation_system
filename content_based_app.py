@@ -42,7 +42,7 @@ def display_recommended_products(recommended_products, cols=5):
                     expander.markdown("Nhấn vào mũi tên để đóng hộp text này.")          
  
 # Đọc dữ liệu sản phẩm
-df_products = pd.read_csv('./data/San_pham.csv')
+df_products = pd.read_csv('San_pham.csv')
 # Lấy 10 sản phẩm
 random_products = df_products.tail(n=10)
 # print(random_products)
