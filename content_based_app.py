@@ -1,181 +1,161 @@
-import streamlit as st
 import pandas as pd
-import pickle
- 
-# function cần thiết
-def get_recommendations(df, ma_san_pham, cosine_sim, nums=5):
-    # Get the index of the product that matches the ma_san_pham
-    matching_indices = df.index[df['ma_san_pham'] == ma_san_pham].tolist()
-    if not matching_indices:
-        print(f"No product found with ID: {ma_san_pham}")
-        return pd.DataFrame()  # Return an empty DataFrame if no match
-    idx = matching_indices[0]
- 
-    # Get the pairwise similarity scores of all products with that product
+import streamlit as st
+from surprise import SVD, Dataset, Reader
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Hàm tải dữ liệu
+@st.cache
+def load_data():
+    san_pham = pd.read_csv("san_pham.csv")
+    danh_gia = pd.read_csv("danh_gia.csv")
+    khach_hang = pd.read_csv("khach_hang.csv")
+    return san_pham, danh_gia, khach_hang
+
+san_pham, danh_gia, khach_hang = load_data()
+
+# Gợi ý dựa trên sản phẩm (Content-based)
+def content_based_recommendation(product_name, san_pham):
+    tfidf = TfidfVectorizer(stop_words="english")
+    tfidf_matrix = tfidf.fit_transform(san_pham["mo_ta"])
+    cosine_sim = cosine_similarity(tfidf_matrix)
+    indices = pd.Series(san_pham.index, index=san_pham["ten_san_pham"]).drop_duplicates()
+
+    if product_name not in indices:
+        return "Không tìm thấy sản phẩm!", []
+
+    idx = indices[product_name]
     sim_scores = list(enumerate(cosine_sim[idx]))
- 
-    # Sort the products based on the similarity scores
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
- 
-    # Get the scores of the nums most similar products (Ignoring the product itself)
-    sim_scores = sim_scores[1:nums+1]
- 
-    # Get the product indices
+    sim_scores = sim_scores[1:11]  # Top 10 sản phẩm tương tự
     product_indices = [i[0] for i in sim_scores]
- 
-    # Return the top n most similar products as a DataFrame
-    return df.iloc[product_indices]
- 
-# Hiển thị đề xuất ra bảng
-def display_recommended_products(recommended_products, cols=5):
-    for i in range(0, len(recommended_products), cols):
-        cols = st.columns(cols)
-        for j, col in enumerate(cols):
-            if i + j < len(recommended_products):
-                product = recommended_products.iloc[i + j]
-                with col:  
-                    st.write(product['ten_san_pham'])                    
-                    expander = st.expander(f"Mô tả")
-                    product_description = product['mo_ta']
-                    truncated_description = ' '.join(product_description.split()[:100]) + '...'
-                    expander.write(truncated_description)
-                    expander.markdown("Nhấn vào mũi tên để đóng hộp text này.")          
- 
-# Đọc dữ liệu sản phẩm
-df_products = pd.read_csv('San_pham.csv')
-# Lấy 10 sản phẩm
-random_products = df_products.tail(n=10)
-# print(random_products)
- 
-st.session_state.random_products = random_products
- 
-# Open and read file to cosine_sim_new
-with open('products_cosine_sim.pkl', 'rb') as f:
-    cosine_sim_new = pickle.load(f)
- 
-###### Giao diện Streamlit ######
-st.image('hasaki_banner.jpg')
-if "sidebar_visible" not in st.session_state:
-    st.session_state.sidebar_visible = True  # Mặc định hiển thị sidebar
- 
-# # Hàm toggle để ẩn/hiện sidebar
-# def toggle_sidebar():
-#     st.session_state.sidebar_visible = not st.session_state.sidebar_visible
- 
-# # Nút để ẩn/hiện sidebar
-# st.button("Toggle Menu", on_click=toggle_sidebar)
- 
-if st.session_state.sidebar_visible:
-    menu = ["Business Objective", "Build Project", "New Prediction"]
-    choice = st.sidebar.selectbox('Menu', menu)
-    # st.write(f"You selected: {choice}")
-else:
-    st.write("Sidebar is hidden. Click the button to show the menu.")
-st.sidebar.write("""#### Thành viên thực hiện:
-                 Phan Thanh Sang & Tạ Quang Hưng""")
-st.sidebar.write("""#### Giảng viên hướng dẫn:
-                 Cô Khuất Thùy Phương""")
-st.sidebar.write("""#### Thời gian thực hiện:
-                 12/2024""")
-if choice == 'Business Objective':    
-    st.subheader("Business Objective")
-    st.write("""
-    ###### Classifying spam and ham messages is one of the most common natural language processing tasks for emails and chat engines. With the advancements in machine learning and natural language processing techniques, it is now possible to separate spam messages from ham messages with a high degree of accuracy.
-    """)  
-    st.write("""###### => Problem/ Requirement: Use Machine Learning algorithms in Python for ham and spam message classification.""")
-    # st.image("ham_spam.jpg")
-    # Kiểm tra xem 'selected_ma_san_pham' đã có trong session_state hay chưa
-    if 'selected_ma_san_pham' not in st.session_state:
-        # Nếu chưa có, thiết lập giá trị mặc định là None hoặc ID sản phẩm đầu tiên
-        st.session_state.selected_ma_san_pham = None
- 
-    # Theo cách cho người dùng chọn sản phẩm từ dropdown
-    # Tạo một tuple cho mỗi sản phẩm, trong đó phần tử đầu là tên và phần tử thứ hai là ID
-    product_options = [(row['ten_san_pham'], row['ma_san_pham']) for index, row in st.session_state.random_products.iterrows()]
-    st.session_state.random_products
-    # Tạo một dropdown với options là các tuple này
-    selected_product = st.selectbox(
-        "Chọn sản phẩm",
-        options=product_options,
-        format_func=lambda x: x[0]  # Hiển thị tên sản phẩm
-    )
-    # Display the selected product
-    st.write("Bạn đã chọn:", selected_product)
- 
-    # Cập nhật session_state dựa trên lựa chọn hiện tại
-    st.session_state.selected_ma_san_pham = selected_product[1]
- 
-    if st.session_state.selected_ma_san_pham:
-        st.write("ma_san_pham: ", st.session_state.selected_ma_san_pham)
-        # Hiển thị thông tin sản phẩm được chọn
-        selected_product = df_products[df_products['ma_san_pham'] == st.session_state.selected_ma_san_pham]
- 
-        if not selected_product.empty:
-            st.write('#### Bạn vừa chọn:')
-            st.write('### ', selected_product['ten_san_pham'].values[0])
- 
-            product_description = selected_product['mo_ta'].values[0]
-            truncated_description = ' '.join(product_description.split()[:100])
-            st.write('##### Thông tin:')
-            st.write(truncated_description, '...')
- 
-            st.write('##### Các sản phẩm liên quan:')
-            recommendations = get_recommendations(df_products, st.session_state.selected_ma_san_pham, cosine_sim=cosine_sim_new, nums=3)
-            display_recommended_products(recommendations, cols=3)
+    return san_pham.iloc[product_indices]
+
+# Gợi ý dựa trên lịch sử người dùng (Collaborative Filtering)
+def collaborative_filtering(user_id, danh_gia, san_pham):
+    reader = Reader(rating_scale=(0.5, 5.0))
+    data = Dataset.load_from_df(danh_gia[["ma_khach_hang", "ma_san_pham", "so_sao"]], reader)
+    trainset = data.build_full_trainset()
+    algo = SVD()
+    algo.fit(trainset)
+
+    user_rated_products = danh_gia[danh_gia["ma_khach_hang"] == user_id]["ma_san_pham"]
+    recommendations = []
+    for product_id in san_pham["ma_san_pham"]:
+        if product_id not in user_rated_products.values:
+            pred = algo.predict(user_id, product_id)
+            recommendations.append((product_id, pred.est))
+
+    recommendations = sorted(recommendations, key=lambda x: x[1], reverse=True)[:10]
+    recommended_products = san_pham[san_pham["ma_san_pham"].isin([rec[0] for rec in recommendations])]
+    return recommended_products
+
+# Giao diện Streamlit với Tabs
+st.title("💄 Beauty Product Recommendation System")
+st.write("Chọn chế độ gợi ý sản phẩm phù hợp!")
+
+# Tabs để lựa chọn chế độ gợi ý
+tabs = st.tabs(["🔍 Gợi ý theo sản phẩm", "👤 Gợi ý theo lịch sử người dùng", "🔥 Gợi ý theo xu hướng", "📦 Gợi ý theo nhóm sản phẩm"])
+
+# Tab 1: Gợi ý theo sản phẩm
+with tabs[0]:
+    st.subheader("🔍 Gợi ý theo sản phẩm")
+    product_name = st.selectbox("Chọn sản phẩm bạn thích:", san_pham["ten_san_pham"].unique())
+    
+    # Select box để chọn lọc theo giá bán hoặc điểm trung bình
+    filter_criteria = st.radio("Chọn tiêu chí lọc:", ("Giá bán", "Điểm trung bình"), key="filter_criteria_product")
+    
+    if filter_criteria == "Giá bán":
+        # Slider để chọn giá bán với key duy nhất
+        min_price, max_price = st.slider("Chọn khoảng giá bán", 
+                                          min_value=int(san_pham["gia_ban"].min()), 
+                                          max_value=int(san_pham["gia_ban"].max()), 
+                                          value=(int(san_pham["gia_ban"].min()), int(san_pham["gia_ban"].max())),
+                                          key="price_slider_product")
+        min_rating, max_rating = 1, 5  # Không cần slider cho điểm trung bình
+
+    elif filter_criteria == "Điểm trung bình":
+        # Slider để chọn điểm trung bình
+        min_rating, max_rating = st.slider("Chọn khoảng điểm trung bình", 
+                                           min_value=1, 
+                                           max_value=5, 
+                                           value=(1, 5),
+                                           key="rating_slider_product")
+        min_price, max_price = int(san_pham["gia_ban"].min()), int(san_pham["gia_ban"].max())  # Không cần slider cho giá bán
+
+    if st.button("Gợi ý sản phẩm (theo sản phẩm)", key="product_button"):
+        if product_name:
+            recommendations = content_based_recommendation(product_name, san_pham)
+            if isinstance(recommendations, str):  # Nếu không tìm thấy sản phẩm
+                st.warning(recommendations)
+            else:
+                # Lọc sản phẩm theo điều kiện đã chọn
+                filtered_recommendations = recommendations[
+                    (recommendations["gia_ban"] >= min_price) & 
+                    (recommendations["gia_ban"] <= max_price) & 
+                    (recommendations["diem_trung_binh"] >= min_rating) &
+                    (recommendations["diem_trung_binh"] <= max_rating)
+                ]
+                if filtered_recommendations.empty:
+                    st.warning("Không có sản phẩm nào phù hợp với điều kiện lọc.")
+                else:
+                    st.write("### Gợi ý các sản phẩm tương tự:")
+                    # Hiển thị kết quả dưới dạng bảng
+                    filtered_recommendations = filtered_recommendations[["ten_san_pham", "gia_ban", "gia_goc", "diem_trung_binh"]]
+                    st.dataframe(filtered_recommendations)
         else:
-            st.write(f"Không tìm thấy sản phẩm với ID: {st.session_state.selected_ma_san_pham}")
-elif choice == 'Build Project':
-    st.subheader("Build Project")
-    st.write("##### 1. Some data")
-    # st.dataframe(data[['v2', 'v1']].head(3))
-    # st.dataframe(data[['v2', 'v1']].tail(3))  
-    st.write("##### 2. Visualize Ham and Spam")
-    # fig1 = sns.countplot(data=data[['v1']], x='v1')    
-    # st.pyplot(fig1.figure)
- 
-    st.write("##### 3. Build model...")
-    st.write("##### 4. Evaluation")
-    # st.code("Score train:"+ str(round(score_train,2)) + " vs Score test:" + str(round(score_test,2)))
-    # st.code("Accuracy:"+str(round(acc,2)))
-    st.write("###### Confusion matrix:")
-    # st.code(cm)
-    st.write("###### Classification report:")
-    # st.code(cr)
-    # st.code("Roc AUC score:" + str(round(roc,2)))
- 
-    # calculate roc curve
-    st.write("###### ROC curve")
-    # fpr, tpr, thresholds = roc_curve(y_test, y_prob[:, 1])
-    # fig, ax = plt.subplots()      
-    # ax.plot([0, 1], [0, 1], linestyle='--')
-    # ax.plot(fpr, tpr, marker='.')
-    # st.pyplot(fig)
- 
-    st.write("##### 5. Summary: This model is good enough for Ham vs Spam classification.")
- 
-elif choice == 'New Prediction':
-    st.subheader("Select data")
-    flag = False
-    lines = None
-    type = st.radio("Upload data or Input data?", options=("Upload", "Input"))
-    if type=="Upload":
-        # Upload file
-        uploaded_file_1 = st.file_uploader("Choose a file", type=['txt', 'csv'])
-        if uploaded_file_1 is not None:
-            lines = pd.read_csv(uploaded_file_1, header=None)
-            st.dataframe(lines)            
-            lines = lines[0]    
-            flag = True                          
-    if type=="Input":        
-        content = st.text_area(label="Input your content:")
-        if content!="":
-            # lines = np.array([content])
-            flag = True
-   
-    if flag:
-        st.write("Content:")
-        if len(lines)>0:
-            st.code(lines)        
-            # x_new = count_model.transform(lines)        
-            # y_pred_new = ham_spam_model.predict(x_new)      
-            # st.code("New predictions (0: Ham, 1: Spam): " + str(y_pred_new))
+            st.error("Vui lòng chọn sản phẩm!")
+
+# Tab 2: Gợi ý theo lịch sử người dùng
+with tabs[1]:
+    st.subheader("👤 Gợi ý theo lịch sử người dùng")
+    user_id = st.number_input("Nhập mã khách hàng:", min_value=1, step=1, value=1)
+    
+    # Select box để chọn lọc theo giá bán hoặc điểm trung bình
+    filter_criteria = st.radio("Chọn tiêu chí lọc:", ("Giá bán", "Điểm trung bình"), key="filter_criteria_user")
+    
+    if filter_criteria == "Giá bán":
+        # Slider để chọn giá bán với key duy nhất
+        min_price, max_price = st.slider("Chọn khoảng giá bán", 
+                                          min_value=int(san_pham["gia_ban"].min()), 
+                                          max_value=int(san_pham["gia_ban"].max()), 
+                                          value=(int(san_pham["gia_ban"].min()), int(san_pham["gia_ban"].max())),
+                                          key="price_slider_user")
+        min_rating, max_rating = 1, 5  # Không cần slider cho điểm trung bình
+
+    elif filter_criteria == "Điểm trung bình":
+        # Slider để chọn điểm trung bình
+        min_rating, max_rating = st.slider("Chọn khoảng điểm trung bình", 
+                                           min_value=1, 
+                                           max_value=5, 
+                                           value=(1, 5),
+                                           key="rating_slider_user")
+        min_price, max_price = int(san_pham["gia_ban"].min()), int(san_pham["gia_ban"].max())  # Không cần slider cho giá bán
+
+    if st.button("Gợi ý sản phẩm (theo người dùng)", key="user_button"):
+        recommendations = collaborative_filtering(user_id, danh_gia, san_pham)
+        if recommendations.empty:
+            st.warning("Không tìm thấy dữ liệu đánh giá của khách hàng này.")
+        else:
+            # Lọc sản phẩm theo điều kiện đã chọn
+            filtered_recommendations = recommendations[
+                (recommendations["gia_ban"] >= min_price) & 
+                (recommendations["gia_ban"] <= max_price) & 
+                (recommendations["diem_trung_binh"] >= min_rating) &
+                (recommendations["diem_trung_binh"] <= max_rating)
+            ]
+            if filtered_recommendations.empty:
+                st.warning("Không có sản phẩm nào phù hợp với điều kiện lọc.")
+            else:
+                st.write(f"### Gợi ý sản phẩm cho Khách Hàng ID: {user_id}")
+                # Hiển thị kết quả dưới dạng bảng
+                filtered_recommendations = filtered_recommendations[["ten_san_pham", "gia_ban", "gia_goc", "diem_trung_binh"]]
+                st.dataframe(filtered_recommendations)
+
+# Tab 3: Gợi ý theo xu hướng
+with tabs[2]:
+    st.subheader("🔥 Gợi ý theo xu hướng")
+
+# Tab 4: Gợi ý theo nhóm sản phẩm
+with tabs[3]:
+    st.subheader("📦 Gợi ý theo nhóm sản phẩm")
