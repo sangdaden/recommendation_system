@@ -7,9 +7,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 # Hàm tải dữ liệu
 @st.cache
 def load_data():
-    san_pham = pd.read_csv("san_pham.csv")
-    danh_gia = pd.read_csv("danh_gia.csv")
-    khach_hang = pd.read_csv("khach_hang.csv")
+    san_pham = pd.read_csv("San_pham.csv")
+    danh_gia = pd.read_csv("Danh_gia.csv")
+    khach_hang = pd.read_csv("Khach_hang.csv")
     return san_pham, danh_gia, khach_hang
 
 san_pham, danh_gia, khach_hang = load_data()
