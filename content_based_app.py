@@ -56,7 +56,8 @@ def collaborative_filtering(user_id, danh_gia, san_pham, khach_hang):
     return customer_name, recommended_products
 
 # Giao diện Streamlit với Tabs
-st.title("💄 Hasaki's Product Recommendation System")
+st.image('hasaki_banner_2.jpg')
+st.title("💄🧴 🧺 Hasaki's Product Recommendation System")
 # st.write("Chọn chế độ gợi ý sản phẩm phù hợp!")
 
 menu = ["Recommendation System", "About Us"]
