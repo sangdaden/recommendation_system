@@ -125,9 +125,9 @@ if choice == 'Recommendation System':
                         for index, row in filtered_recommendations.iterrows():
                             # Thêm icon ngọn lửa cho 3 sản phẩm đầu tiên
                             if count < 3:
-                                product_title = f"🔥 {row['ten_san_pham']} - Giá: {row['gia_ban']} - Điểm trung bình: {row['diem_trung_binh']}"
+                                product_title = f"🔥 {row['ten_san_pham']} - Giá: {row['gia_ban']} - ⭐: {row['diem_trung_binh']}"
                             else:
-                                product_title = f"{row['ten_san_pham']} - Giá: {row['gia_ban']} - Điểm trung bình: {row['diem_trung_binh']}"
+                                product_title = f"{row['ten_san_pham']} - Giá: {row['gia_ban']} - ⭐: {row['diem_trung_binh']}"
 
                             # Hiển thị sản phẩm dưới dạng expander
                             with st.expander(product_title):
@@ -202,9 +202,9 @@ if choice == 'Recommendation System':
                     for index, row in filtered_recommendations.iterrows():
                         # Thêm icon ngọn lửa cho 3 sản phẩm đầu tiên
                         if count < 3:
-                            product_title = f"🔥 {row['ten_san_pham']} - Giá: {row['gia_ban']} - Điểm trung bình: {row['diem_trung_binh']}"
+                            product_title = f"🔥 {row['ten_san_pham']} - Giá: {row['gia_ban']} - ⭐: {row['diem_trung_binh']}"
                         else:
-                            product_title = f"{row['ten_san_pham']} - Giá: {row['gia_ban']} - Điểm trung bình: {row['diem_trung_binh']}"
+                            product_title = f"{row['ten_san_pham']} - Giá: {row['gia_ban']} - ⭐: {row['diem_trung_binh']}"
 
                         # Hiển thị sản phẩm dưới dạng expander
                         with st.expander(product_title):
