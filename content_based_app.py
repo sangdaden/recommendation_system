@@ -159,37 +159,20 @@ if choice == 'Recommendation System':
 
     # Tab 2: Gợi ý theo lịch sử người dùng
     with tabs[1]:
-        st.subheader("👤 Gợi ý sản phẩm dựa trên lịch sử người dùng (Collaborative Filtering)")
-        
+        st.subheader("👤 Gợi ý theo lịch sử người dùng (Collaborative Filtering)")
+
+        # Tạo danh sách dropdown từ bảng khach_hang
+        customer_options = khach_hang.apply(
+            lambda row: f"ID:{row['ma_khach_hang']}, Tên khách hàng: {row['ho_ten']}", axis=1
+        ).tolist()
+
         # Dropdown menu để chọn khách hàng
-        selected_customer = st.selectbox(
-            "Chọn khách hàng:",
-            options=khach_hang.apply(
-                lambda row: f"ID:{row['ma_khach_hang']}, Tên khách hàng: {row['ho_ten']}", axis=1
-            ).tolist()
-        )
-        
+        selected_customer = st.selectbox("Chọn khách hàng:", options=customer_options)
+
         # Tách `user_id` từ lựa chọn
-        user_id = int(selected_customer.split(",")[0].split(":")[1])
+        user_id = int(selected_customer.split(",")[0].split(":")[1])  # Lấy phần ID từ chuỗi
 
-        # Lấy danh sách sản phẩm đã mua
-        purchased_products = get_customer_purchased_products(user_id, danh_gia, san_pham)
-        
-        # Hiển thị sản phẩm đã mua
-        st.write("### Các sản phẩm đã mua:")
-        if isinstance(purchased_products, str):
-            st.warning(purchased_products)
-        else:
-            for index, row in purchased_products.iterrows():
-                product_title = f"{row['ten_san_pham']} - Giá: {row['gia_ban']} - ⭐: {row['diem_trung_binh']}"
-                with st.expander(product_title):
-                    st.write(f"**Mô tả:** {row['mo_ta']}")
-                    st.write(f"**Ngày bình luận:** {row['ngay_binh_luan']}")
-                    st.write(f"**Nội dung bình luận:** {row['noi_dung_binh_luan']}")
-
-        # Lựa chọn tiêu chí lọc cho sản phẩm gợi ý
-        st.write("---")  # Dòng kẻ ngang để phân chia
-        st.write("### Sản phẩm gợi ý:")
+        # Lựa chọn tiêu chí lọc
         filter_criteria = st.radio("Chọn tiêu chí lọc:", ("Giá bán", "Điểm trung bình"), key="filter_criteria_user")
 
         if filter_criteria == "Giá bán":
@@ -200,7 +183,7 @@ if choice == 'Recommendation System':
                 value=(int(san_pham["gia_ban"].min()), int(san_pham["gia_ban"].max())),
                 key="price_slider_user"
             )
-            min_rating, max_rating = 1, 5
+            min_rating, max_rating = 1, 5  # Không cần lọc điểm trung bình
 
         elif filter_criteria == "Điểm trung bình":
             min_rating, max_rating = st.slider(
@@ -210,31 +193,61 @@ if choice == 'Recommendation System':
                 value=(1, 5),
                 key="rating_slider_user"
             )
-            min_price, max_price = int(san_pham["gia_ban"].min()), int(san_pham["gia_ban"].max())
+            min_price, max_price = int(san_pham["gia_ban"].min()), int(san_pham["gia_ban"].max())  # Không cần lọc giá bán
+
+        if st.button("Xem sản phẩm đã mua", key="view_purchased_products"):
+            purchased_products = get_customer_purchased_products(user_id, danh_gia, san_pham)
+            
+            if isinstance(purchased_products, str):
+                st.warning(purchased_products)
+            else:
+                st.write(f"### Các sản phẩm đã mua bởi Khách Hàng ID: {user_id}")
+                for index, row in purchased_products.iterrows():
+                    product_title = f"{row['ten_san_pham']} - Giá: {row['gia_ban']} - ⭐: {row['diem_trung_binh']}"
+                    with st.expander(product_title):
+                        st.write(f"**Mô tả:** {row['mo_ta']}")
+                        st.write(f"**Ngày bình luận:** {row['ngay_binh_luan']}")
+                        st.write(f"**Nội dung bình luận:** {row['noi_dung_binh_luan']}")
+
 
         if st.button("Gợi ý sản phẩm (theo người dùng)", key="user_button"):
-            customer_name, recommended_products = collaborative_filtering(user_id, danh_gia, san_pham, khach_hang)
+            customer_name, recommendations = collaborative_filtering(user_id, danh_gia, san_pham, khach_hang)
 
-            if recommended_products.empty:
+            if recommendations.empty:
                 st.warning("Không tìm thấy dữ liệu đánh giá của khách hàng này.")
             else:
                 # Lọc sản phẩm theo tiêu chí
-                filtered_recommendations = recommended_products[
-                    (recommended_products["gia_ban"] >= min_price) &
-                    (recommended_products["gia_ban"] <= max_price) &
-                    (recommended_products["diem_trung_binh"] >= min_rating) &
-                    (recommended_products["diem_trung_binh"] <= max_rating)
+                filtered_recommendations = recommendations[
+                    (recommendations["gia_ban"] >= min_price) &
+                    (recommendations["gia_ban"] <= max_price) &
+                    (recommendations["diem_trung_binh"] >= min_rating) &
+                    (recommendations["diem_trung_binh"] <= max_rating)
                 ]
 
                 if filtered_recommendations.empty:
                     st.warning("Không có sản phẩm nào phù hợp với điều kiện lọc.")
                 else:
+                    # Hiển thị thông tin khách hàng
+                    st.write(f"### Gợi ý sản phẩm cho Khách Hàng ID: {user_id} - Tên: {customer_name}")
+
+                    # Biến đếm để xác định 3 sản phẩm đầu tiên
+                    count = 0
+
+                    # Hiển thị danh sách sản phẩm
                     for index, row in filtered_recommendations.iterrows():
-                        product_title = f"{row['ten_san_pham']} - Giá: {row['gia_ban']} - ⭐: {row['diem_trung_binh']}"
+                        # Thêm icon ngọn lửa cho 3 sản phẩm đầu tiên
+                        if count < 3:
+                            product_title = f"🔥 {row['ten_san_pham']} - Giá: {row['gia_ban']} - ⭐: {row['diem_trung_binh']}"
+                        else:
+                            product_title = f"{row['ten_san_pham']} - Giá: {row['gia_ban']} - ⭐: {row['diem_trung_binh']}"
+
+                        # Hiển thị sản phẩm dưới dạng expander
                         with st.expander(product_title):
                             st.write(f"**Mô tả:** {row['mo_ta']}")
                             st.write(f"**Điểm trung bình:** {row['diem_trung_binh']}")
 
+                        # Tăng bộ đếm sau khi hiển thị một sản phẩm
+                        count += 1
 
 
 if choice == 'About Us': 
