@@ -66,7 +66,7 @@ def collaborative_filtering(user_id, danh_gia, san_pham, khach_hang):
             pred = algo.predict(user_id, product_id)
             recommendations.append((product_id, pred.est))
 
-    recommendations = sorted(recommendations, key=lambda x: x[1], reverse=True)[:10]
+    recommendations = sorted(recommendations, key=lambda x: x[1], reverse=True)[:5]
     recommended_products = san_pham[san_pham["ma_san_pham"].isin([rec[0] for rec in recommendations])]
 
     # Lấy thông tin khách hàng từ bảng 'khach_hang'
