@@ -7,4 +7,3 @@ scikit-learn
 gensim
 underthesea
 surprise
-PIL
