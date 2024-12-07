@@ -3,7 +3,6 @@ import streamlit as st
 from surprise import SVD, Dataset, Reader
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from PIL import Image
 
 # Hàm tải dữ liệu
 @st.cache_data 
@@ -218,10 +217,6 @@ if choice == 'Recommendation System':
 if choice == 'About Us': 
     tabs = st.tabs(["📃 Thông tin khóa học", "👨‍💻 Thành viên trong nhóm"])
 
-    # Đọc và chỉnh kích thước hình ảnh
-    image1 = Image.open("sang.png").resize((400, 400))  # Resize để đảm bảo kích thước bằng nhau
-    image2 = Image.open("hung.png").resize((400, 400))
-
     # Tab 1: Gợi ý theo sản phẩm
     with tabs[0]:
         st.title("Đồ Án Tốt Nghiệp Data Science & Machine Learning")
@@ -240,9 +235,9 @@ if choice == 'About Us':
 
         # Hiển thị hình trong cột 1
         with col1:
-            st.image(image1, caption="Phan Thanh Sang", use_container_width =True)
+            st.image('sang.png', caption="Phan Thanh Sang", use_container_width =True)
 
         # Hiển thị hình trong cột 2
         with col2:
-            st.image(image2, caption="Tạ Quang Hưng", use_container_width =True)
+            st.image('hung.png', caption="Tạ Quang Hưng", use_container_width =True)
     
