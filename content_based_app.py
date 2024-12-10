@@ -76,20 +76,92 @@ def collaborative_filtering(user_id, danh_gia, san_pham, khach_hang):
     return customer_name, recommended_products
 
 # Giao diện Streamlit với Tabs
-st.image('hasaki_banner_2.jpg')
+# st.image('hasaki_banner_2.jpg')
 st.title("💄🧴 🧺 Hasaki's Product Recommendation System")
 # st.write("Chọn chế độ gợi ý sản phẩm phù hợp!")
 
-menu = ["Recommendation System", "About Us"]
+menu = ["Đặt Vấn Đề", "Hướng Giải Quyết", "Hệ Thống Đề Xuất", "Về Nhóm Thực Hiện"]
 choice = st.sidebar.selectbox('Menu', menu)
 st.sidebar.write("""#### Thành viên thực hiện:
-                 Phan Thanh Sang & Tạ Quang Hưng""")
+                 Phan Thanh Sang & 
+                 Tạ Quang Hưng""")
 st.sidebar.write("""#### Giảng viên hướng dẫn:
                  Cô Khuất Thùy Phương""")
 st.sidebar.write("""#### Thời gian thực hiện:
                  12/2024""")
 
-if choice == 'Recommendation System':   
+if choice == 'Đặt Vấn Đề':
+    st.header("🧑‍💻 Tổng quan vấn đề cho Hasaki")
+    # Phần giới thiệu
+    st.subheader("Giới thiệu")
+    st.write("""
+        Cửa hàng mỹ phẩm cần giúp khách hàng dễ dàng tìm thấy sản phẩm phù hợp trong hàng ngàn lựa chọn. 
+        Hệ thống gợi ý (Recommendation System) mang lại lợi ích lớn bằng cách cá nhân hóa trải nghiệm mua sắm, giảm thời gian tìm kiếm, và tăng doanh số.
+    """)
+    # Các vấn đề gặp phải
+    st.subheader("Vấn đề cần giải quyết")
+    st.write("""
+        1. **Số lượng sản phẩm đa dạng**: Khách hàng khó chọn sản phẩm phù hợp.  
+        2. **Thiếu cá nhân hóa**: Sản phẩm không đáp ứng đúng nhu cầu từng người.  
+        3. **Khó khám phá sản phẩm mới**: Cơ hội quảng bá bị bỏ lỡ.  
+    """)
+
+    # Mục tiêu hệ thống
+    st.subheader("Mục tiêu")
+    st.write("""
+        1. Cá nhân hóa gợi ý để tăng sự hài lòng của khách hàng.  
+        2. Hỗ trợ khám phá sản phẩm mới, cải thiện doanh số.  
+        3. Giữ chân khách hàng thông qua trải nghiệm mua sắm tốt hơn.  
+    """)
+
+    st.write("Với hệ thống gợi ý, cửa hàng mỹ phẩm có thể tối ưu hóa trải nghiệm khách hàng và đạt được mục tiêu kinh doanh bền vững.")
+
+elif choice == 'Hướng Giải Quyết':
+    st.header("💪 Hướng xử lý vấn đề")
+    # Tabs để chia trang
+    tab1, tab2 = st.tabs(["Collaborative Filtering (SVD)", "Content-Based Filtering"])
+    # ----------- Collaborative Filtering ----------- #
+    with tab1:
+        st.subheader("Collaborative Filtering")
+        st.write("""
+        **Collaborative Filtering** gợi ý sản phẩm dựa trên hành vi của người dùng. 
+        Phương pháp sử dụng dữ liệu lịch sử đánh giá để dự đoán điểm số sản phẩm chưa tương tác.
+        
+        **Quy trình:**
+        1. Thu thập lịch sử tương tác (đánh giá, mua hàng).
+        2. Áp dụng SVD để phân rã ma trận tương tác.
+        3. Dự đoán điểm số và gợi ý sản phẩm có điểm cao nhất.
+
+        **Ưu điểm:** Khám phá sản phẩm mới.  
+        **Hạn chế:** Gặp vấn đề "lạnh" với người dùng hoặc sản phẩm mới.
+        """)
+
+    # ----------- Content-Based Filtering ----------- #
+    with tab2:
+        st.subheader("Content-Based Filtering")
+        st.write("""
+        **Content-Based Filtering** gợi ý dựa trên đặc điểm của sản phẩm và sở thích người dùng. 
+        Sử dụng độ tương đồng (cosine similarity) giữa các sản phẩm để gợi ý.
+
+        **Quy trình:**
+        1. Thu thập dữ liệu sản phẩm (mô tả, đặc điểm).
+        2. Tính độ tương đồng bằng cosine similarity.
+        3. Gợi ý các sản phẩm có độ tương đồng cao nhất.
+
+        **Ưu điểm:** Cá nhân hóa gợi ý tốt.  
+        **Hạn chế:** Hạn chế trong việc khám phá sản phẩm mới.
+    """)
+    # Kết luận
+    st.header("Kết luận")
+    st.write("""
+        Cả hai phương pháp đều hữu ích:
+        - **Collaborative Filtering**: Tốt cho khám phá sản phẩm mới.
+        - **Content-Based Filtering**: Tốt cho cá nhân hóa.  
+
+        Kết hợp cả hai để tăng hiệu quả gợi ý.
+    """)
+
+elif choice == 'Hệ Thống Đề Xuất':   
     # Tabs để lựa chọn chế độ gợi ý
     tabs = st.tabs(["🔍 Gợi ý theo sản phẩm", "👤 Gợi ý theo lịch sử người dùng"])
 
@@ -250,7 +322,7 @@ if choice == 'Recommendation System':
                         count += 1
 
 
-if choice == 'About Us': 
+elif choice == 'Về Nhóm Thực Hiện': 
     tabs = st.tabs(["📃 Thông tin khóa học", "👨‍💻 Thành viên trong nhóm"])
 
     # Tab 1: Gợi ý theo sản phẩm
@@ -276,4 +348,10 @@ if choice == 'About Us':
         # Hiển thị hình trong cột 2
         with col2:
             st.image('hung.png', caption="Tạ Quang Hưng", use_container_width =True)
+    # Phần liên hệ
+    st.header("Liên hệ")
+    st.write("""
+        Nếu bạn cần góp ý hãy liên hệ:
+        - **Email**: sang.phan2409@gmail.com
+    """)
     
